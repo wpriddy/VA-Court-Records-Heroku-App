@@ -6,7 +6,7 @@ import pickle
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
-with open(r'.\token.txt', 'rb') as f:
+with open(r'token.txt', 'rb') as f:
     tokens = {k.split(" = ")[0]: k.split(" = ")[-1] for k in f.read().decode('utf-8').replace('\r', '').split('\n')}
 
 session = boto3.Session()
