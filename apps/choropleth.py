@@ -8,7 +8,7 @@ import json
 import plotly.express as px
 import pandas as pd
 import pathlib
-from data.aws_data import circuit, census_data, geo_map
+from data.aws_data import full_data, census_data, geo_map
 
 # get relative data folder
 PATH = pathlib.Path(__file__).parent
@@ -19,7 +19,11 @@ colors = {
     'text': '#2C2C2C'
 }
 
-data = circuit
+data = full_data['circuit']
+
+min_key = min(data)
+race_list = data[min_key].Race.unique()
+sex_list = data[min_key].Sex.unique()
 
 fips_map = pd.read_pickle(DATA_PATH.joinpath('fips_map.pickle'))
 
@@ -36,6 +40,15 @@ layout = html.Div(children = [
         html.Div([
 
             dcc.RadioItems(
+                id='district_or_circuit',
+                options = [{'label': 'Circuit', 'value': 'circuit'}, {'label': 'District', 'value': 'district'}],
+                value = 'circuit',
+                className = 'district_circuit_radio'
+            ),
+
+            html.Div(' a', style={'color':'white'}),
+
+            dcc.RadioItems(
                 id='adjust_per_capita',
                 options = [{'label': 'Per Capita Arrests', 'value': 'True'}, {'label': 'Absolute Arrests', 'value': 'False'}],
                 value = 'True',
@@ -47,7 +60,7 @@ layout = html.Div(children = [
             dcc.Dropdown(
                 id='race',
                 #Update to have own race list
-                options=sorted([{'label': i, 'value': i} for i in data[2000].Race.unique() if i == i], key=lambda x: x['label']),
+                options=sorted([{'label': i, 'value': i} for i in race_list if i == i], key=lambda x: x['label']),
                 value= 'American Indian',
                 searchable=False,
                 style={'background-color': '#DDD7D7', 'font-weight': 'bold'},
@@ -58,7 +71,7 @@ layout = html.Div(children = [
             dcc.Dropdown(
                 id='gender',
                 #Update to have own sex list
-                options = sorted([{'label': i, 'value': i} for i in data[2000].Sex.unique() if i == i], key=lambda x: x['label']),
+                options = sorted([{'label': i, 'value': i} for i in sex_list if i == i], key=lambda x: x['label']),
                 value = 'Female',
                 searchable=False,
                 style={'background-color': '#DDD7D7', 'font-weight': 'bold'},
@@ -97,13 +110,14 @@ layout = html.Div(children = [
 
 @app.callback(
     Output('interactive-graphic', 'figure'),
+    Input('district_or_circuit', 'value'),
     Input('race', 'value'),
     Input('gender', 'value'),
     Input('time-series', 'value'),
     Input('adjust_per_capita', 'value'))
-def update_graph(race_name: str, gender_name: str, year: int, per_capita: bool):
+def update_graph(district_or_circuit: str, race_name: str, gender_name: str, year: int, per_capita: bool):
 
-    transformed_data = data[year].groupby(['FIPS', 'Area', 'Race', 'Sex'])['FIPS'].count().reset_index(name='count')
+    transformed_data = full_data[district_or_circuit][year].groupby(['FIPS', 'Area', 'Race', 'Sex'])['FIPS'].count().reset_index(name='count')
 
     # Create data frame with count=zero for every combination of FIPS, Area, Race, and Sex
     empty_data = pd.DataFrame(product(census_data.Gender.unique(), census_data.Race.unique(), census_data.FIPS.unique(), [0]), columns=['Sex', 'Race', 'FIPS', 'count'])
