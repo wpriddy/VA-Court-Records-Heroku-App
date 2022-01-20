@@ -8,11 +8,11 @@ import json
 import plotly.express as px
 import pandas as pd
 import pathlib
-from data.aws_data import full_data, census_data, geo_map
+from data.get_data import full_data, census_data, geo_map
 
 # get relative data folder
 PATH = pathlib.Path(__file__).parent
-DATA_PATH = PATH.joinpath("../data").resolve()
+DATA_PATH = PATH.joinpath("../data/files").resolve()
 
 colors = {
     'background': '#111111',
