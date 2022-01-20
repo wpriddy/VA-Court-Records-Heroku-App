@@ -92,14 +92,38 @@ for year in clean_data:
                 'Civil Violation':7,
                 'Non Case':8}
 
-    disposition_map = {var: val for var, val in zip(data['FinalDisposition'].unique(), range(100))}
+    disposition_map = {'Fugitive File':0,
+                     'Nolle Prosequi':1,
+                      'Guilty':3,
+                       'Dismissed':4,
+                        'Other':5,
+                    'Not Guilty':6,
+                    'Guilty In Absentia':7,
+                    'Certified To Grand Jury':8,
+                    'Extradition Waived':9,
+                    'Transferred To Another Jurisdiction/Court':10,
+                    'Prepaid':11,
+                    'Complied With Law':12,
+                    'Defendant Not Found':13,
+                    'Sentence/Probation Revoked':14,
+                    'Denied': 15,
+                     'Dismissed/Other':16,
+                     'Not Guilty/Insanity':17, 
+                     'Bond Forfeited':18, 
+                     'Certified Misdemeanor':19,
+                      'Extradition Ordered':20, 
+                      'Granted':21, 
+                      'Adjudicated Habitual Offender':22}
 
 
-    data.Gender = data.Gender.map(sex_map)
-    data.Race = data.Race.map(race_map)
-    data.CaseType = data.CaseType.map(case_map)
-    data.FinalDisposition = data.FinalDisposition.map(disposition_map)
-    district_small[year] = data.astype('int32')
+
+    data.Gender = data.Gender.map(sex_map).astype('int8')
+    data.Race = data.Race.map(race_map).astype('int8')
+    data.CaseType = data.CaseType.map(case_map).astype('int8')
+    data.FinalDisposition = data.FinalDisposition.map(disposition_map).astype('int8')
+    data.fips = data.fips.astype('int32')
+    district_small[year] = data
+    
 
 reduced_size = {year: size(district_small[year]) for year in district_small}
 
