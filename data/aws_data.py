@@ -23,9 +23,8 @@ s3_client = session.client(
 circuit_keys = range(2000, 2021)
 district_keys = range(2007, 2021)
 
-full_data = {}
-full_data['circuit'] = {}
-full_data['district'] = {}
+full_data = {'circuit': {}, 'district': {}}
+
 
 def read_bucket(bucket: str, key, dataset):
 
@@ -37,11 +36,13 @@ with ThreadPoolExecutor() as executor:
         executor.submit(read_bucket, 'va-courts-circuit', year, 'circuit'): year for year in circuit_keys
     }
 
-    futures2 = {
-        executor.submit(read_bucket, 'va-courts-district', year, 'district'): year for year in district_keys
-    }
+    # futures2 = {
+    #     executor.submit(read_bucket, 'va-courts-district', year, 'district'): year for year in district_keys
+    # }
 
 census_data = pickle.loads(s3_client.get_object(Bucket = 'va-courts-other', Key='census_clean.pickle')['Body'].read())
 
 geo_map = json.loads(s3_client.get_object(Bucket = 'va-courts-other', Key='geo_main.json')['Body'].read())
 # %%
+
+
