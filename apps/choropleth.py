@@ -55,8 +55,8 @@ layout = html.Div(children = [
             dcc.Dropdown(
                 id='race',
                 #Update to have own race list
-                options=[{'label': val, 'value': key} for key, val in race_map.items()],
-                value= 0,
+                options=[{'label': val, 'value': key} for key, val in sorted(race_map.items(), key=lambda item: item[1])],
+                value= 5,
                 searchable=False,
                 style={'background-color': '#DDD7D7', 'font-weight': 'bold'},
                 className = 'race_dropdown'
@@ -65,9 +65,9 @@ layout = html.Div(children = [
             html.Div(' a', style={'color':'white'}),
             dcc.Dropdown(
                 id='gender',
-                #Update to have own sex list
-                options = [{'label': val, 'value': key} for key, val in sex_map.items()],
-                value = 0,
+                #Update to have own sex list  
+                options = [{'label': val, 'value': key} for key, val in sorted(sex_map.items(), key=lambda item: item[1])],
+                value = 1,
                 searchable=False,
                 style={'background-color': '#DDD7D7', 'font-weight': 'bold'},
                 className = 'gender_dropdown'
@@ -142,6 +142,7 @@ def update_graph(district_or_circuit: str, race_name: str, gender_name: str, yea
         )
     else:
         #  Auto Adjust Legend Range to Fit Value
+        transformed_data['Area'] = transformed_data.FIPS.map(fips_map)
         color_range = (min(transformed_data['count']), max(transformed_data['count']))
 
         fig = px.choropleth(transformed_data, geojson=geo_map, locations='FIPS', color='count',
