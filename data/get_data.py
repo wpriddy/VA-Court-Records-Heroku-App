@@ -5,6 +5,9 @@ import json
 import pickle
 import os
 
+
+tempermental_medium = '.'
+
 tokens = {'access key ID': 'AKIA6GKIQREKFAYKTX6N',
         'access key': 'aNBWg/pptHHydedMFeDvZFl4X5Yz9YpwfGhpQcFV'
         }
@@ -20,11 +23,18 @@ s3_client = session.client(
 )
 
 
-full_data = {'circuit': {year: pd.read_pickle(os.path.abspath(os.path.join('data', 'files', 'circuit', str(year) + '.pickle'))) for year in range(2000, 2021)},
-             'district': {year: pd.read_pickle(os.path.abspath(os.path.join('data', 'files', 'district', str(year) + '.pickle'))) for year in range(2007, 2021)}
+full_data = {'circuit': {year: pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files', 'circuit', str(year) + '.pickle')) for year in range(2000, 2021)},
+             'district': {year: pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files', 'district', str(year) + '.pickle')) for year in range(2007, 2021)}
              }
 
-census_data = pickle.loads(s3_client.get_object(Bucket = 'va-courts-other', Key='census_clean.pickle')['Body'].read())
+race_map = pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'race_map.pickle'))
+sex_map = pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'sex_map.pickle'))
+
+circuit_charge_map = pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'circuit_charge_map.pickle'))
+circuit_dispo_map = pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'circuit_disposition_map.pickle'))
+district_case_map = pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'district_casetype_map.pickle'))
+district_dispo_map = pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'district_disposition_map.pickle'))
+census_data = pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'census_data.pickle'))
 
 geo_map = json.loads(s3_client.get_object(Bucket = 'va-courts-other', Key='geo_main.json')['Body'].read())
 # %%

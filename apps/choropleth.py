@@ -1,14 +1,15 @@
 #%%
 from dash import dcc, html
 from dash.dependencies import Input, Output
-from concurrent.futures import ThreadPoolExecutor
 from itertools import product
+import sys
+sys.path.insert(0, r'..')
 from app import app
 import json
 import plotly.express as px
 import pandas as pd
 import pathlib
-from data.get_data import full_data, census_data, geo_map
+from data.get_data import *
 
 # get relative data folder
 PATH = pathlib.Path(__file__).parent
@@ -18,12 +19,6 @@ colors = {
     'background': '#111111',
     'text': '#2C2C2C'
 }
-
-data = full_data['circuit']
-
-min_key = min(data)
-race_list = data[min_key].Race.unique()
-sex_list = data[min_key].Sex.unique()
 
 fips_map = pd.read_pickle(DATA_PATH.joinpath('fips_map.pickle'))
 
@@ -60,8 +55,8 @@ layout = html.Div(children = [
             dcc.Dropdown(
                 id='race',
                 #Update to have own race list
-                options=sorted([{'label': i, 'value': i} for i in race_list if i == i], key=lambda x: x['label']),
-                value= 'American Indian',
+                options=[{'label': val, 'value': key} for key, val in race_map.items()],
+                value= 0,
                 searchable=False,
                 style={'background-color': '#DDD7D7', 'font-weight': 'bold'},
                 className = 'race_dropdown'
@@ -71,8 +66,8 @@ layout = html.Div(children = [
             dcc.Dropdown(
                 id='gender',
                 #Update to have own sex list
-                options = sorted([{'label': i, 'value': i} for i in sex_list if i == i], key=lambda x: x['label']),
-                value = 'Female',
+                options = [{'label': val, 'value': key} for key, val in sex_map.items()],
+                value = 0,
                 searchable=False,
                 style={'background-color': '#DDD7D7', 'font-weight': 'bold'},
                 className = 'gender_dropdown'
@@ -96,10 +91,10 @@ layout = html.Div(children = [
         dcc.Slider(
 
         id='time-series',
-        min = min(data),
-        max = max(data),
-        value = max(data),
-        marks = {str(k): {'label': str(k), 'style': {'font-weight': 'bold', 'font-size': '15px', 'color': '#000000'}} for k in data},
+        min = min(full_data['circuit']), #update
+        max = max(full_data['circuit']), #update
+        value = max(full_data['circuit']),  #update
+        marks = {str(k): {'label': str(k), 'style': {'font-weight': 'bold', 'font-size': '15px', 'color': '#000000'}} for k in full_data['circuit']}, #update
         step=None,
         tooltip = {'placement':'top'},
         className = 'slider'
@@ -117,22 +112,23 @@ layout = html.Div(children = [
     Input('adjust_per_capita', 'value'))
 def update_graph(district_or_circuit: str, race_name: str, gender_name: str, year: int, per_capita: bool):
 
-    transformed_data = full_data[district_or_circuit][year].groupby(['FIPS', 'Area', 'Race', 'Sex'])['FIPS'].count().reset_index(name='count')
+    transformed_data = full_data[district_or_circuit][year].groupby(['FIPS', 'Race', 'Sex'])['FIPS'].count().reset_index(name='count')
 
     # Create data frame with count=zero for every combination of FIPS, Area, Race, and Sex
-    empty_data = pd.DataFrame(product(census_data.Gender.unique(), census_data.Race.unique(), census_data.FIPS.unique(), [0]), columns=['Sex', 'Race', 'FIPS', 'count'])
-    empty_data['Area'] = empty_data.FIPS.map(fips_map)
+    empty_data = pd.DataFrame(product(census_data.Sex.unique(), census_data.Race.unique(), census_data.FIPS.unique(), [0]), columns=['Sex', 'Race', 'FIPS', 'count'])
 
     # Concatenate and sum
     transformed_data = pd.concat([transformed_data, empty_data])
-    transformed_data = transformed_data.groupby(['FIPS', 'Area', 'Race', 'Sex']).sum().reset_index()
+    transformed_data = transformed_data.groupby(['FIPS', 'Race', 'Sex']).sum().reset_index()
 
     transformed_data = transformed_data[(transformed_data.Race == race_name)&(transformed_data.Sex == gender_name)]
 
     #Final Data in Dictionary, use Year to Index data
     if per_capita == 'True':
-        transformed_data = pd.merge(transformed_data, census_data[census_data.YEAR == year], how='left', left_on=['FIPS', 'Race', 'Sex'], right_on=['FIPS', 'Race', 'Gender']).drop(columns=['Gender', 'YEAR'])
+        transformed_data = pd.merge(transformed_data, census_data[census_data.YEAR == year], how='left', left_on=['FIPS', 'Race', 'Sex'], right_on=['FIPS', 'Race', 'Sex']).drop(columns=['YEAR'])
         transformed_data['Per Capita Arrests'] = transformed_data['count'] / transformed_data['population']
+        transformed_data['Area'] = transformed_data.FIPS.map(fips_map)
+
         #  Auto Adjust Legend Range to Fit Value
         color_range = (min(transformed_data['Per Capita Arrests']), max(transformed_data['Per Capita Arrests']))
 
