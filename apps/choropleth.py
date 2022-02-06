@@ -77,7 +77,7 @@ layout = html.Div(children = [
                 id='charge_type',
                 #Update to have own sex list  
                 options = [{'label': val, 'value': key} for key, val in sorted(charge_map['circuit'].items(), key=lambda item: item[1])],
-                value = 1,
+                value = 0,
                 searchable=False,
                 style={'background-color': '#DDD7D7', 'font-weight': 'bold'},
                 className = 'charge_dropdown'
@@ -87,7 +87,7 @@ layout = html.Div(children = [
                 id='disposition_type',
                 #Update to have own sex list  
                 options = [{'label': val, 'value': key} for key, val in sorted(dispo_map['circuit'].items(), key=lambda item: item[1])],
-                value = 1,
+                value = 0,
                 searchable=False,
                 style={'background-color': '#DDD7D7', 'font-weight': 'bold'},
                 className = 'dispo_dropdown'
@@ -129,19 +129,28 @@ layout = html.Div(children = [
     Input('race', 'value'),
     Input('gender', 'value'),
     Input('time-series', 'value'),
-    Input('adjust_per_capita', 'value'))
-def update_graph(district_or_circuit: str, race_name: str, gender_name: str, year: int, per_capita: bool):
+    Input('adjust_per_capita', 'value'),
+    Input('charge_type', 'value'),
+    Input('disposition_type', 'value'))
+def update_graph(district_or_circuit, race_name, gender_name, year, per_capita, charge_type, dispo_code):
 
-    transformed_data = full_data[district_or_circuit][year].groupby(['FIPS', 'Race', 'Sex'])['FIPS'].count().reset_index(name='count')
+    transformed_data = full_data[district_or_circuit][year].groupby(['FIPS', 'Race', 'Sex', 'ChargeType', 'DispositionCode'])['FIPS'].count().reset_index(name='count')
 
     # Create data frame with count=zero for every combination of FIPS, Area, Race, and Sex
-    empty_data = pd.DataFrame(product(census_data.Sex.unique(), census_data.Race.unique(), census_data.FIPS.unique(), [0]), columns=['Sex', 'Race', 'FIPS', 'count'])
+    empty_data = pd.DataFrame(product(
+                                census_data.Sex.unique(), 
+                                census_data.Race.unique(),
+                                census_data.FIPS.unique(),
+                                charge_map[district_or_circuit].keys(),
+                                dispo_map[district_or_circuit].keys(),
+                                [0]), columns=['Sex', 'Race', 'FIPS', 'ChargeType', 'DispositionCode', 'count'])
 
     # Concatenate and sum
     transformed_data = pd.concat([transformed_data, empty_data])
-    transformed_data = transformed_data.groupby(['FIPS', 'Race', 'Sex']).sum().reset_index()
+    transformed_data = transformed_data.groupby(['FIPS', 'Race', 'Sex', 'ChargeType', 'DispositionCode']).sum().reset_index()
 
-    transformed_data = transformed_data[(transformed_data.Race == race_name)&(transformed_data.Sex == gender_name)]
+    transformed_data.query(f'Race == {race_name} & Sex == {gender_name} & ChargeType == {charge_type} & DispositionCode == {dispo_code}'
+                        , inplace=True)
 
     # Final Data in Dictionary, use Year to Index data
     if per_capita == 'True':
