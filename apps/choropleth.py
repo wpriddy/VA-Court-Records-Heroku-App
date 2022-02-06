@@ -71,7 +71,27 @@ layout = html.Div(children = [
                 searchable=False,
                 style={'background-color': '#DDD7D7', 'font-weight': 'bold'},
                 className = 'gender_dropdown'
-                )
+                ),
+            html.Div(' a', style={'color':'white'}),
+            dcc.Dropdown(
+                id='charge_type',
+                #Update to have own sex list  
+                options = [{'label': val, 'value': key} for key, val in sorted(charge_map['circuit'].items(), key=lambda item: item[1])],
+                value = 1,
+                searchable=False,
+                style={'background-color': '#DDD7D7', 'font-weight': 'bold'},
+                className = 'charge_dropdown'
+                ),
+            html.Div(' a', style={'color':'white'}),
+            dcc.Dropdown(
+                id='disposition_type',
+                #Update to have own sex list  
+                options = [{'label': val, 'value': key} for key, val in sorted(dispo_map['circuit'].items(), key=lambda item: item[1])],
+                value = 1,
+                searchable=False,
+                style={'background-color': '#DDD7D7', 'font-weight': 'bold'},
+                className = 'dispo_dropdown'
+                ),
             ]),
 
         ], style={'width': '300px', 'display': 'inline-block', 'text-align': 'center', 'margin': 'auto', 'float':'left'}),
@@ -89,20 +109,20 @@ layout = html.Div(children = [
 
     html.Div(
         dcc.Slider(
-
         id='time-series',
-        min = min(full_data['circuit']), #update
-        max = max(full_data['circuit']), #update
-        value = max(full_data['circuit']),  #update
-        marks = {str(k): {'label': str(k), 'style': {'font-weight': 'bold', 'font-size': '15px', 'color': '#000000'}} for k in full_data['circuit']}, #update
+        min = min(full_data['circuit']),
+        max = max(full_data['circuit']),
+        value = max(full_data['circuit']),
+        marks = {str(k): {'label': str(k), 'style': {'font-weight': 'bold', 'font-size': '15px', 'color': '#000000'}} for k in full_data['circuit']},
         step=None,
         tooltip = {'placement':'top'},
         className = 'slider'
         )
-    )
+)
 
 ])
 
+# Querying and Graphing Selected Data
 @app.callback(
     Output('interactive-graphic', 'figure'),
     Input('district_or_circuit', 'value'),
@@ -123,7 +143,7 @@ def update_graph(district_or_circuit: str, race_name: str, gender_name: str, yea
 
     transformed_data = transformed_data[(transformed_data.Race == race_name)&(transformed_data.Sex == gender_name)]
 
-    #Final Data in Dictionary, use Year to Index data
+    # Final Data in Dictionary, use Year to Index data
     if per_capita == 'True':
         transformed_data = pd.merge(transformed_data, census_data[census_data.YEAR == year], how='left', left_on=['FIPS', 'Race', 'Sex'], right_on=['FIPS', 'Race', 'Sex']).drop(columns=['YEAR'])
         transformed_data['Per Capita Arrests'] = transformed_data['count'] / transformed_data['population']
@@ -156,4 +176,34 @@ def update_graph(district_or_circuit: str, race_name: str, gender_name: str, yea
     fig.update_layout(margin={'r':0,'t':0,'l':0,'b':0})
 
     return fig
+
+# Modifying Slider and Drop Down to be Dynamic
+@app.callback(
+    [Output('time-series', 'min'),
+    Output('time-series', 'max'),
+    Output('time-series', 'marks')],
+    Input('district_or_circuit', 'value')
+    )
+def update_dynamic_slider(district_or_circuit: str):
+
+    min_val = min(full_data[district_or_circuit])
+    max_val = max(full_data[district_or_circuit])
+    marks_val = {str(k): {'label': str(k), 'style': {'font-weight': 'bold', 'font-size': '15px', 'color': '#000000'}} for k in full_data[district_or_circuit]}
+    
+    return min_val, max_val, marks_val 
+
+@app.callback(
+    [Output('charge_type', 'options'),
+    Output('disposition_type', 'options')],
+    Input('district_or_circuit', 'value')
+    )
+def update_dynamic_dropdowns(district_or_circuit):
+
+    charge_options = [{'label': val, 'value': key} for key, val in sorted(charge_map[district_or_circuit].items(), key=lambda item: item[1])]
+    disposition_options = [{'label': val, 'value': key} for key, val in sorted(dispo_map[district_or_circuit].items(), key=lambda item: item[1])]
+
+    return charge_options, disposition_options
+
+
+
 # %%

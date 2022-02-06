@@ -30,10 +30,12 @@ full_data = {'circuit': {year: pd.read_pickle(os.path.join(tempermental_medium, 
 race_map = pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'race_map.pickle'))
 sex_map = pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'sex_map.pickle'))
 
-circuit_charge_map = pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'circuit_charge_map.pickle'))
-circuit_dispo_map = pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'circuit_disposition_map.pickle'))
-district_case_map = pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'district_casetype_map.pickle'))
-district_dispo_map = pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'district_disposition_map.pickle'))
+charge_map = {'circuit': pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'circuit_charge_map.pickle')),
+              'district': pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'district_casetype_map.pickle'))}
+
+dispo_map = {'circuit': pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'circuit_disposition_map.pickle')),
+             'district': pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'district_disposition_map.pickle'))}
+
 census_data = pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'census_data.pickle'))
 
 geo_map = json.loads(s3_client.get_object(Bucket = 'va-courts-other', Key='geo_main.json')['Body'].read())
