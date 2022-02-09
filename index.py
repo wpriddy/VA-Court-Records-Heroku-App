@@ -10,11 +10,19 @@ from apps import choropleth, construction
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
+
     html.Div([
-        dcc.Link('Choropleth', href='/heat-map', className='button'),
-        dcc.Link('Dashboard', href='/dashboard', className='button')
-    ]),
-    html.Div(id='page-content')
+        html.Div([
+                html.Img(src=app.get_asset_url('va.png'), style={'height':'56px'},
+                         className='w3-cell w3-cell-middle w3-bar-item w3-hover-blue'),
+                dcc.Link('Choropleth', href='/heat-map', style={'height':'56px', 'text-decoration':'none'},
+                         className='w3-cell w3-cell-middle w3-bar-item w3-hover-blue'),
+                dcc.Link('Dashboard', href='/dashboard', style={'height':'56px', 'text-decoration':'none'},
+                         className='w3-cell w3-cell-middle w3-bar-item w3-hover-blue')
+        ], className='w3-container w3-white w3-bar w3-card')
+    ], className='w3-top'),
+
+    html.Div(id='page-content', className='w3-container w3-padding-48')
 ])
 
 
