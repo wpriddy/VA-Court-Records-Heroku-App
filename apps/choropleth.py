@@ -27,100 +27,108 @@ layout = html.Div(children = [
     html.H1(children = 'Virginia Court Records Interactive Choropleth',
             style = {
                 'textAlign': 'center',
-                'color': colors['text']
+                'color': colors['text'],
+                'font-weight': 'bold'               
             }),
 
     html.Div([
-
-        html.Div([
-
-            dcc.RadioItems(
+            dcc.Dropdown(
                 id='district_or_circuit',
                 options = [{'label': 'Circuit', 'value': 'circuit'}, {'label': 'District', 'value': 'district'}],
                 value = 'circuit',
-                className = 'district_circuit_radio'
+                searchable=False, 
+                style={'background-color': '#DDD7D7','width': '275px'},
+                className = 'row w3-row w3-third'
             ),
 
-            html.Div(' a', style={'color':'white'}),
+            html.Div(' a'*2,  style={'color':'white'}),
 
-            dcc.RadioItems(
-                id='adjust_per_capita',
-                options = [{'label': 'Per Capita Arrests', 'value': 'True'}, {'label': 'Absolute Arrests', 'value': 'False'}],
-                value = 'True',
-                className = 'radio'
-            ),
+            dcc.Dropdown(
+                id='time-series',
+                options = [{'label': str(k), 'value': k} for k in full_data['circuit']],
+                value = max(full_data['circuit']),
+                searchable=False,
+                style={'background-color': '#DDD7D7','width': '275px'},
+                className = 'row w3-row w3-third'
+                ),
 
-            html.Ul(children=[
+            html.Div(' a'*2,  style={'color':'white'}),
 
             dcc.Dropdown(
                 id='race',
-                #Update to have own race list
                 options=[{'label': val, 'value': key} for key, val in sorted(race_map.items(), key=lambda item: item[1])],
                 value= 5,
                 searchable=False,
-                style={'background-color': '#DDD7D7', 'font-weight': 'bold'},
-                className = 'race_dropdown'
+                style={'background-color': '#DDD7D7','width': '275px'},
+                className = 'row w3-row w3-third'
             ),
-            #This is a hack job, look to fix
-            html.Div(' a', style={'color':'white'}),
+            
+            html.Div(' a'*2,  style={'color':'white'}),
+
             dcc.Dropdown(
                 id='gender',
-                #Update to have own sex list  
                 options = [{'label': val, 'value': key} for key, val in sorted(sex_map.items(), key=lambda item: item[1])],
                 value = 1,
                 searchable=False,
-                style={'background-color': '#DDD7D7', 'font-weight': 'bold'},
-                className = 'gender_dropdown'
+                style={'background-color': '#DDD7D7','width': '275px'},
+                className = 'row w3-row w3-third'
                 ),
-            html.Div(' a', style={'color':'white'}),
+            ], style={'display':'flex', 'margin':'1.5em'}
+        ),
+
+        html.Div([
+
+            dcc.Dropdown(
+                id='adjust_per_capita',
+                options = [{'label': 'Per Capita Arrests', 'value': 'True'}, {'label': 'Absolute Arrests', 'value': 'False'}],
+                value = 'True',
+                searchable=False,
+                style={'background-color': '#DDD7D7','width': '375px'},
+                className = 'row w3-row w3-quarter'
+            ),
+
+            html.Div(' a'*2,  style={'color':'white'}),
+
             dcc.Dropdown(
                 id='charge_type',
-                #Update to have own sex list  
                 options = [{'label': val, 'value': key} for key, val in sorted(charge_map['circuit'].items(), key=lambda item: item[1])],
                 value = 0,
                 searchable=False,
-                style={'background-color': '#DDD7D7', 'font-weight': 'bold'},
-                className = 'charge_dropdown'
+                style={'background-color': '#DDD7D7','width': '375px'},
+                className = 'row w3-row w3-quarter'
                 ),
-            html.Div(' a', style={'color':'white'}),
+            
+            html.Div(' a'*2,  style={'color':'white'}),
+
             dcc.Dropdown(
                 id='disposition_type',
-                #Update to have own sex list  
                 options = [{'label': val, 'value': key} for key, val in sorted(dispo_map['circuit'].items(), key=lambda item: item[1])],
                 value = 0,
                 searchable=False,
-                style={'background-color': '#DDD7D7', 'font-weight': 'bold'},
-                className = 'dispo_dropdown'
+                style={'background-color': '#DDD7D7','width': '375px'},
+                className = 'row w3-row w3-quarter'
                 ),
-            ]),
-
-        ], style={'width': '300px', 'display': 'inline-block', 'text-align': 'center', 'margin': 'auto', 'float':'left'}),
+            
+            html.H3('Summary Statistics', style={'margin-left': '140px'}, className='row')
+            ], style={'display':'flex', 'margin':'1.5em'}
+        ),
 
         html.Div([
 
             dcc.Graph(
                 id='interactive-graphic',
-                style = {'border': '.5px solid black', 'width': '60%', 'margin': 'auto'},
-                className = 'choropleth')
-                ])
+                style = {'border': '.5px solid black', 'margin-left': '28px'},
+                className = 'w3 row w3-twothird'),
 
-    ], style={'border': '3px solid #fff',
-            'padding': '20px'}),
-
-    html.Div(
-        dcc.Slider(
-        id='time-series',
-        min = min(full_data['circuit']),
-        max = max(full_data['circuit']),
-        value = max(full_data['circuit']),
-        marks = {str(k): {'label': str(k), 'style': {'font-weight': 'bold', 'font-size': '15px', 'color': '#000000'}} for k in full_data['circuit']},
-        step=None,
-        tooltip = {'placement':'top'},
-        className = 'slider'
-        )
+                html.Div([
+                    html.Img(src = app.get_asset_url('temp_graph.png'), style={'height': '220px', 'margin-left':'150px', 'margin-right': '28px'}), 
+                    
+                    html.Img(src = app.get_asset_url('temp_pie.jpg'), style={'height':'220px', 'margin-left':'150px', 'margin-right': '28px'})
+                    
+                    ], )
+                ]),
+    ]
 )
-
-])
 
 # Querying and Graphing Selected Data
 @app.callback(
@@ -162,7 +170,7 @@ def update_graph(district_or_circuit, race_name, gender_name, year, per_capita, 
         color_range = (min(transformed_data['Per Capita Arrests']), max(transformed_data['Per Capita Arrests']))
 
         fig = px.choropleth(transformed_data, geojson=geo_map, locations='FIPS', color='Per Capita Arrests',
-            color_continuous_scale='Viridis',
+            color_continuous_scale='ylorbr',
             range_color = color_range,
             scope='usa',   # Update to Only show virginia
             labels={race_name: race_name ,'count': 'arrests'},
@@ -175,7 +183,7 @@ def update_graph(district_or_circuit, race_name, gender_name, year, per_capita, 
         color_range = (min(transformed_data['count']), max(transformed_data['count']))
 
         fig = px.choropleth(transformed_data, geojson=geo_map, locations='FIPS', color='count',
-            color_continuous_scale='Viridis',
+            color_continuous_scale='ylorbr',
             range_color = color_range,
             scope='usa',   # Update to Only show virginia
             labels={race_name: race_name, 'count': 'Arrests'},
@@ -188,30 +196,20 @@ def update_graph(district_or_circuit, race_name, gender_name, year, per_capita, 
 
 # Modifying Slider and Drop Down to be Dynamic
 @app.callback(
-    [Output('time-series', 'min'),
-    Output('time-series', 'max'),
-    Output('time-series', 'marks')],
-    Input('district_or_circuit', 'value')
-    )
-def update_dynamic_slider(district_or_circuit: str):
-
-    min_val = min(full_data[district_or_circuit])
-    max_val = max(full_data[district_or_circuit])
-    marks_val = {str(k): {'label': str(k), 'style': {'font-weight': 'bold', 'font-size': '15px', 'color': '#000000'}} for k in full_data[district_or_circuit]}
-    
-    return min_val, max_val, marks_val 
-
-@app.callback(
     [Output('charge_type', 'options'),
-    Output('disposition_type', 'options')],
+    Output('disposition_type', 'options'),
+    Output('time-series', 'options')], 
+    Output('time-series', 'value'),
     Input('district_or_circuit', 'value')
     )
 def update_dynamic_dropdowns(district_or_circuit):
 
     charge_options = [{'label': val, 'value': key} for key, val in sorted(charge_map[district_or_circuit].items(), key=lambda item: item[1])]
     disposition_options = [{'label': val, 'value': key} for key, val in sorted(dispo_map[district_or_circuit].items(), key=lambda item: item[1])]
+    year_options = [{'label': str(k), 'value': k} for k in full_data[district_or_circuit]]
+    year_value = max(full_data[district_or_circuit])
 
-    return charge_options, disposition_options
+    return charge_options, disposition_options, year_options, year_value
 
 
 
