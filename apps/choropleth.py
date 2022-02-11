@@ -10,7 +10,6 @@ import plotly.express as px
 import pandas as pd
 import pathlib
 from data.get_data import *
-from collections.abc import Iterable
 
 # get relative data folder
 PATH = pathlib.Path(__file__).parent
@@ -148,6 +147,26 @@ layout = html.Div(children = [
     Input('disposition_type', 'value'))
 def update_graph(district_or_circuit, race_name, sex_name, year, per_capita, charge_type, dispo_code):
 
+    if not bool(race_name):
+        race_name = [*range(6)]
+    if not bool(sex_name):
+        sex_name = [*range(2)]
+    if not bool(year):
+        if district_or_circuit == 'circuit':
+            year = [*range(min(full_data['circuit']), max(full_data['circuit']) + 1)]
+        else:
+            year = [*range(min(full_data['district']), max(full_data['district']) + 1)]
+    if not bool(charge_type):
+        if district_or_circuit == 'circuit':
+            charge_type = [*range(5)]
+        else:
+            charge_type = [*range(9)]
+    if not bool(dispo_code):
+        if district_or_circuit == 'circuit':
+            dispo_code = [*range(12)]
+        else:
+            dispo_code = [*range(23)]
+
     transformed_data = pd.concat(val for key, val in full_data[district_or_circuit].items() if int(key) in year).groupby(['FIPS', 'Race', 'Sex', 'ChargeType', 'DispositionCode'])['FIPS'].count().reset_index(name='count')
 
     # Create data frame with count=zero for every combination of FIPS, Area, Race, and Sex
@@ -175,7 +194,10 @@ def update_graph(district_or_circuit, race_name, sex_name, year, per_capita, cha
                         f'ChargeType == %s' % charge_type_str,
                         f'DispositionCode == %s' % dispo_code_str]) + ')'
 
-    transformed_data = transformed_data.query(query_str).groupby(['FIPS'])['count'].sum().reset_index()
+    if len(year) < 2:
+        transformed_data = transformed_data.query(query_str).groupby(['FIPS'])['count'].sum().reset_index()
+    else:
+        transformed_data = transformed_data.query(query_str).groupby(['FIPS'])['count'].mean().astype(int).reset_index()
 
     # Final Data in Dictionary, use Year to Index data
     if per_capita == 'True':
@@ -185,8 +207,11 @@ def update_graph(district_or_circuit, race_name, sex_name, year, per_capita, cha
                                                f'YEAR == %s' % year]) + ')'
         
         census = census_data.query(census_query_str)
-        census = census.groupby(['FIPS'])['population'].sum().reset_index()
-        
+        if len(year) < 2:
+            census = census.groupby(['FIPS'])['population'].sum().reset_index()
+        else:
+            census = census.groupby(['FIPS'])['population'].mean().astype(int).reset_index()
+
         transformed_data = pd.merge(transformed_data, census, how='left', left_on=['FIPS'], right_on=['FIPS'])
         transformed_data['Per Capita Arrests'] = transformed_data['count'] / transformed_data['population']
         transformed_data['Area'] = transformed_data.FIPS.map(fips_map)
