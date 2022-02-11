@@ -11,6 +11,8 @@ import pandas as pd
 import pathlib
 from data.get_data import *
 
+from collections.abc import Iterable
+
 # get relative data folder
 PATH = pathlib.Path(__file__).parent
 DATA_PATH = PATH.joinpath("../data/files").resolve()
@@ -57,8 +59,9 @@ layout = html.Div(children = [
             dcc.Dropdown(
                 id='race',
                 options=[{'label': val, 'value': key} for key, val in sorted(race_map.items(), key=lambda item: item[1])],
-                value= 5,
+                value= [5],
                 searchable=False,
+                multi=True,
                 style={'background-color': '#DDD7D7','width': '275px'},
                 className = 'row'
             ),
@@ -157,8 +160,22 @@ def update_graph(district_or_circuit, race_name, gender_name, year, per_capita, 
     transformed_data = pd.concat([transformed_data, empty_data])
     transformed_data = transformed_data.groupby(['FIPS', 'Race', 'Sex', 'ChargeType', 'DispositionCode']).sum().reset_index()
 
-    transformed_data.query(f'Race == {race_name} & Sex == {gender_name} & ChargeType == {charge_type} & DispositionCode == {dispo_code}'
-                        , inplace=True)
+    # Form query
+    race_map_inverse = {v: k for k, v in race_map.items()}
+    if isinstance(race_name, Iterable):
+        race_code_str = '[' + ', '.join([str(x) for x in race_name]) + ']'
+    else:
+        race_code_str = [race_name]
+
+    query_str = '('
+    query_str += ') & ('.join([f'Race in %s' % race_code_str,
+                           f'Sex == {gender_name}',
+                           f'ChargeType == {charge_type}',
+                           f'DispositionCode == {dispo_code}'])
+    query_str += ')'
+
+    print(query_str)
+    transformed_data.query(query_str, inplace=True)
 
     # Final Data in Dictionary, use Year to Index data
     if per_capita == 'True':
@@ -173,7 +190,7 @@ def update_graph(district_or_circuit, race_name, gender_name, year, per_capita, 
             color_continuous_scale='ylorbr',
             range_color = color_range,
             scope='usa',   # Update to Only show virginia
-            labels={race_name: race_name ,'count': 'arrests'},
+            labels={'count': 'Arrests'},
             hover_name = 'Area',
             hover_data = ['population', 'count']
         )
@@ -186,7 +203,7 @@ def update_graph(district_or_circuit, race_name, gender_name, year, per_capita, 
             color_continuous_scale='ylorbr',
             range_color = color_range,
             scope='usa',   # Update to Only show virginia
-            labels={race_name: race_name, 'count': 'Arrests'},
+            labels={'count': 'arrests'},
             hover_name = 'Area'
         )
     fig.update_geos(fitbounds="locations")
