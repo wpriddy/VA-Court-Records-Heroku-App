@@ -10,6 +10,7 @@ import plotly.express as px
 import pandas as pd
 import pathlib
 from data.get_data import *
+from collections.abc import Iterable
 
 # get relative data folder
 PATH = pathlib.Path(__file__).parent
@@ -45,9 +46,10 @@ layout = html.Div(children = [
 
             dcc.Dropdown(
                 id='time-series',
-                options = [{'label': str(k), 'value': k} for k in full_data['circuit']],
-                value = max(full_data['circuit']),
+                options = [{'label': str(k), 'value': k} for k in sorted(full_data['circuit'], reverse=True)],
+                value = [max(full_data['circuit'])],
                 searchable=False,
+                multi=True,
                 style={'background-color': '#DDD7D7','width': '275px'},
                 className = 'row'
                 ),
@@ -57,8 +59,9 @@ layout = html.Div(children = [
             dcc.Dropdown(
                 id='race',
                 options=[{'label': val, 'value': key} for key, val in sorted(race_map.items(), key=lambda item: item[1])],
-                value= 5,
+                value= [5],
                 searchable=False,
+                multi=True,
                 style={'background-color': '#DDD7D7','width': '275px'},
                 className = 'row'
             ),
@@ -68,8 +71,9 @@ layout = html.Div(children = [
             dcc.Dropdown(
                 id='gender',
                 options = [{'label': val, 'value': key} for key, val in sorted(sex_map.items(), key=lambda item: item[1])],
-                value = 1,
+                value = [1],
                 searchable=False,
+                multi=True, 
                 style={'background-color': '#DDD7D7','width': '275px'},
                 className = 'row'
                 ),
@@ -92,8 +96,9 @@ layout = html.Div(children = [
             dcc.Dropdown(
                 id='charge_type',
                 options = [{'label': val, 'value': key} for key, val in sorted(charge_map['circuit'].items(), key=lambda item: item[1])],
-                value = 0,
+                value = [0],
                 searchable=False,
+                multi=True, 
                 style={'background-color': '#DDD7D7','width': '375px'},
                 className = 'row'
                 ),
@@ -103,8 +108,9 @@ layout = html.Div(children = [
             dcc.Dropdown(
                 id='disposition_type',
                 options = [{'label': val, 'value': key} for key, val in sorted(dispo_map['circuit'].items(), key=lambda item: item[1])],
-                value = 0,
+                value = [0],
                 searchable=False,
+                multi=True,
                 style={'background-color': '#DDD7D7','width': '375px'},
                 className = 'row'
                 ),
@@ -140,9 +146,9 @@ layout = html.Div(children = [
     Input('adjust_per_capita', 'value'),
     Input('charge_type', 'value'),
     Input('disposition_type', 'value'))
-def update_graph(district_or_circuit, race_name, gender_name, year, per_capita, charge_type, dispo_code):
+def update_graph(district_or_circuit, race_name, sex_name, year, per_capita, charge_type, dispo_code):
 
-    transformed_data = full_data[district_or_circuit][year].groupby(['FIPS', 'Race', 'Sex', 'ChargeType', 'DispositionCode'])['FIPS'].count().reset_index(name='count')
+    transformed_data = pd.concat(val for key, val in full_data[district_or_circuit].items() if int(key) in year).groupby(['FIPS', 'Race', 'Sex', 'ChargeType', 'DispositionCode'])['FIPS'].count().reset_index(name='count')
 
     # Create data frame with count=zero for every combination of FIPS, Area, Race, and Sex
     empty_data = pd.DataFrame(product(
@@ -157,12 +163,31 @@ def update_graph(district_or_circuit, race_name, gender_name, year, per_capita, 
     transformed_data = pd.concat([transformed_data, empty_data])
     transformed_data = transformed_data.groupby(['FIPS', 'Race', 'Sex', 'ChargeType', 'DispositionCode']).sum().reset_index()
 
-    transformed_data.query(f'Race == {race_name} & Sex == {gender_name} & ChargeType == {charge_type} & DispositionCode == {dispo_code}'
-                        , inplace=True)
+    # Form query
+    race_code_str = '[' + ', '.join([str(x) for x in race_name]) + ']'
+    sex_code_str = '[' + ', '.join([str(x) for x in sex_name]) + ']'
+    charge_type_str = '[' + ', '.join([str(x) for x in charge_type]) + ']'
+    dispo_code_str = '[' + ', '.join([str(x) for x in dispo_code]) + ']'
+
+
+    query_str = '(' + ') & ('.join([f'Race in %s' % race_code_str,
+                        f'Sex == %s' % sex_code_str,
+                        f'ChargeType == %s' % charge_type_str,
+                        f'DispositionCode == %s' % dispo_code_str]) + ')'
+
+    transformed_data = transformed_data.query(query_str).groupby(['FIPS'])['count'].sum().reset_index()
 
     # Final Data in Dictionary, use Year to Index data
     if per_capita == 'True':
-        transformed_data = pd.merge(transformed_data, census_data[census_data.YEAR == year], how='left', left_on=['FIPS', 'Race', 'Sex'], right_on=['FIPS', 'Race', 'Sex']).drop(columns=['YEAR'])
+
+        census_query_str = '(' + ') & ('.join([f'Race in %s' % race_code_str,
+                                               f'Sex == %s' % sex_name, 
+                                               f'YEAR == %s' % year]) + ')'
+        
+        census = census_data.query(census_query_str)
+        census = census.groupby(['FIPS'])['population'].sum().reset_index()
+        
+        transformed_data = pd.merge(transformed_data, census, how='left', left_on=['FIPS'], right_on=['FIPS'])
         transformed_data['Per Capita Arrests'] = transformed_data['count'] / transformed_data['population']
         transformed_data['Area'] = transformed_data.FIPS.map(fips_map)
         
@@ -173,7 +198,7 @@ def update_graph(district_or_circuit, race_name, gender_name, year, per_capita, 
             color_continuous_scale='ylorbr',
             range_color = color_range,
             scope='usa',   # Update to Only show virginia
-            labels={race_name: race_name ,'count': 'arrests'},
+            labels={'count': 'Arrests'},
             hover_name = 'Area',
             hover_data = ['population', 'count']
         )
@@ -186,7 +211,7 @@ def update_graph(district_or_circuit, race_name, gender_name, year, per_capita, 
             color_continuous_scale='ylorbr',
             range_color = color_range,
             scope='usa',   # Update to Only show virginia
-            labels={race_name: race_name, 'count': 'Arrests'},
+            labels={'count': 'arrests'},
             hover_name = 'Area'
         )
     fig.update_geos(fitbounds="locations")
@@ -206,8 +231,8 @@ def update_dynamic_dropdowns(district_or_circuit):
 
     charge_options = [{'label': val, 'value': key} for key, val in sorted(charge_map[district_or_circuit].items(), key=lambda item: item[1])]
     disposition_options = [{'label': val, 'value': key} for key, val in sorted(dispo_map[district_or_circuit].items(), key=lambda item: item[1])]
-    year_options = [{'label': str(k), 'value': k} for k in full_data[district_or_circuit]]
-    year_value = max(full_data[district_or_circuit])
+    year_options = [{'label': str(k), 'value': k} for k in sorted(full_data[district_or_circuit], reverse=True)]
+    year_value = [max(full_data[district_or_circuit])]
 
     return charge_options, disposition_options, year_options, year_value
 

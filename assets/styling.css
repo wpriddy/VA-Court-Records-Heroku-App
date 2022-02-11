@@ -9,3 +9,9 @@
     margin-left: auto;
     margin-right: auto;
 }
+
+.custom-dropdown .Select--multi .Select-value {
+    background-color: #fcba03;
+    border-color: #e3a700;
+    color: #fff;
+  }
