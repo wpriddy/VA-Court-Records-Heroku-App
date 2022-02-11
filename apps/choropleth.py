@@ -38,7 +38,7 @@ layout = html.Div(children = [
                 value = 'circuit',
                 searchable=False, 
                 style={'background-color': '#DDD7D7','width': '275px'},
-                className = 'row w3-row w3-third'
+                className = 'row'
             ),
 
             html.Div(' a'*2,  style={'color':'white'}),
@@ -49,7 +49,7 @@ layout = html.Div(children = [
                 value = max(full_data['circuit']),
                 searchable=False,
                 style={'background-color': '#DDD7D7','width': '275px'},
-                className = 'row w3-row w3-third'
+                className = 'row'
                 ),
 
             html.Div(' a'*2,  style={'color':'white'}),
@@ -60,7 +60,7 @@ layout = html.Div(children = [
                 value= 5,
                 searchable=False,
                 style={'background-color': '#DDD7D7','width': '275px'},
-                className = 'row w3-row w3-third'
+                className = 'row'
             ),
             
             html.Div(' a'*2,  style={'color':'white'}),
@@ -71,7 +71,7 @@ layout = html.Div(children = [
                 value = 1,
                 searchable=False,
                 style={'background-color': '#DDD7D7','width': '275px'},
-                className = 'row w3-row w3-third'
+                className = 'row'
                 ),
             ], style={'display':'flex', 'margin':'1.5em'}
         ),
@@ -84,7 +84,7 @@ layout = html.Div(children = [
                 value = 'True',
                 searchable=False,
                 style={'background-color': '#DDD7D7','width': '375px'},
-                className = 'row w3-row w3-quarter'
+                className = 'row'
             ),
 
             html.Div(' a'*2,  style={'color':'white'}),
@@ -95,7 +95,7 @@ layout = html.Div(children = [
                 value = 0,
                 searchable=False,
                 style={'background-color': '#DDD7D7','width': '375px'},
-                className = 'row w3-row w3-quarter'
+                className = 'row'
                 ),
             
             html.Div(' a'*2,  style={'color':'white'}),
@@ -106,7 +106,7 @@ layout = html.Div(children = [
                 value = 0,
                 searchable=False,
                 style={'background-color': '#DDD7D7','width': '375px'},
-                className = 'row w3-row w3-quarter'
+                className = 'row'
                 ),
             
             html.H3('Summary Statistics', style={'margin-left': '140px'}, className='row')
@@ -125,7 +125,7 @@ layout = html.Div(children = [
                     
                     html.Img(src = app.get_asset_url('temp_pie.jpg'), style={'height':'220px', 'margin-left':'150px', 'margin-right': '28px'})
                     
-                    ], )
+                    ], className = 'w3-row w3-rest')
                 ]),
     ]
 )
@@ -165,7 +165,7 @@ def update_graph(district_or_circuit, race_name, gender_name, year, per_capita, 
         transformed_data = pd.merge(transformed_data, census_data[census_data.YEAR == year], how='left', left_on=['FIPS', 'Race', 'Sex'], right_on=['FIPS', 'Race', 'Sex']).drop(columns=['YEAR'])
         transformed_data['Per Capita Arrests'] = transformed_data['count'] / transformed_data['population']
         transformed_data['Area'] = transformed_data.FIPS.map(fips_map)
-
+        
         #  Auto Adjust Legend Range to Fit Value
         color_range = (min(transformed_data['Per Capita Arrests']), max(transformed_data['Per Capita Arrests']))
 
