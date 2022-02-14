@@ -6,11 +6,12 @@ from dash.dependencies import Input, Output
 from app import app, server
 
 # Connect to your app pages
-from apps import choropleth, construction
+from apps import choropleth, construction, api_docs, dashboard
 
 layouts = {'/heat-map': choropleth.layout,
           '/': construction.layout,
-          '/dashboard': construction.layout}
+          '/dashboard': dashboard.layout,
+          '/api_docs': api_docs.layout}
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
@@ -27,12 +28,17 @@ app.layout = html.Div([
                 dcc.Link('Dashboard', href='/dashboard', style={'height':'56px',
                                                              'text-decoration':'none', 
                                                              'text-shadow':'0.5px 0.5px 0 #444'},
+                         className='w3-bar-item w3-hover-blue'),
+                dcc.Link('API Documentation', href='/api_docs', style={'height':'56px',
+                                                             'text-decoration':'none', 
+                                                             'text-shadow':'0.5px 0.5px 0 #444'},
                          className='w3-bar-item w3-hover-blue')
         ], className='w3-container w3-white w3-bar w3-card')
     ], className='w3-top'),
 
     html.Div(id='page-content', className='w3-container w3-padding-48')
-])
+    ]
+)
 
 
 @app.callback(Output(component_id='page-content', component_property='children'),

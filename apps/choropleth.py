@@ -6,7 +6,6 @@ import sys
 sys.path.insert(0, r'..')
 from app import app
 import plotly.express as px
-import plotly.graph_objects as go
 import pandas as pd
 import pathlib
 from data.get_data import *
