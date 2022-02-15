@@ -27,7 +27,8 @@ layout = html.Div(children = [
             style = {
                 'textAlign': 'center',
                 'color': colors['text'],
-                'font-weight': 'bold'               
+                'font-weight': 'bold',
+                'margin-top': '20px'                 
             }),
 
     html.Div([
@@ -40,21 +41,21 @@ layout = html.Div(children = [
                     style={'background-color': '#DDD7D7','width': '100%'},
                     className = 'row',
                     placeholder = 'Select a Court'
-                ), style={'width': '16.2%', 'display': 'inline-block'}),
+                ), style={'width': '16%', 'display': 'inline-block'}),
 
             html.Div(' a'*2,  style={'color':'white'}),
 
             html.Div(
                 dcc.Dropdown(
-                    id='time-series_d',
-                    options = [{'label': str(k), 'value': k} for k in sorted(full_data['circuit'], reverse=True)],
-                    value = [max(full_data['circuit'])],
+                    id='fips_code',
+                    options = [{'label': val, 'value': key} for key, val in sorted(fips_map.items(), key=lambda item: item[1])],
+                    value = 'All',
                     searchable=False,
                     multi=True,
                     style={'background-color': '#DDD7D7','width': '100%'},
                     className = 'row',
-                    placeholder = 'All Years'
-                ), style = {'width': '16.2%', 'display': 'inline-block'}),
+                    placeholder = 'All Regions'
+                ), style = {'width': '16%', 'display': 'inline-block'}),
 
             html.Div(' a'*2,  style={'color':'white'}),
 
@@ -68,7 +69,7 @@ layout = html.Div(children = [
                     style={'background-color': '#DDD7D7','width': '100%'},
                     className = 'row',
                     placeholder = 'All Races'
-                ), style = {'width': '16.2%', 'display': 'inline-block'}),
+                ), style = {'width': '16%', 'display': 'inline-block'}),
             
             html.Div(' a'*2,  style={'color':'white'}),
 
@@ -82,42 +83,45 @@ layout = html.Div(children = [
                     style={'background-color': '#DDD7D7','width': '100%'},
                     className = 'row', 
                     placeholder = 'All Sexes'
-                ), style = {'width': '16.2%', 'display': 'inline-block'})
+                ), style = {'width': '16%', 'display': 'inline-block'}),
 
-        ], style={'display':'flex', 'margin':'1.5em'}
-    ),
-
-        html.Div(' a'*2,  style={'color':'white'}),
+               html.Div(' a'*2,  style={'color':'white'}),
         
-        html.Div(
-            dcc.Dropdown(
-                id='charge_type_d',
-                options = [{'label': val, 'value': key} for key, val in sorted(charge_map['circuit'].items(), key=lambda item: item[1])],
-                value = [0],
-                searchable=False,
-                multi=True, 
-                style={'background-color': '#DDD7D7','width': '100%'},
-                className = 'row',
-                placeholder = 'All Charges'
-            ), style =  {'width': '22%', 'display': 'inline-block'}),
-            
-        html.Div(' a'*2,  style={'color':'white'}),
+                html.Div(
+                    dcc.Dropdown(
+                        id='charge_type_d',
+                        options = [{'label': val, 'value': key} for key, val in sorted(charge_map['circuit'].items(), key=lambda item: item[1])],
+                        value = [0],
+                        searchable=False,
+                        multi=True, 
+                        style={'background-color': '#DDD7D7','width': '100%'},
+                        className = 'row',
+                        placeholder = 'All Charges'
+                    ), style =  {'width': '16%', 'display': 'inline-block'}),
+                    
+                html.Div(' a'*2,  style={'color':'white'}),
 
-        html.Div(
-            dcc.Dropdown(
-                id='disposition_type_d',
-                options = [{'label': val, 'value': key} for key, val in sorted(dispo_map['circuit'].items(), key=lambda item: item[1])],
-                value = [0],
-                searchable=False,
-                multi=True,
-                style={'background-color': '#DDD7D7','width': '100%'},
-                className = 'row',
-                placeholder = 'All Dispositions'
-            ), style =  {'width': '22%', 'display': 'inline-block'}),
+                html.Div(
+                    dcc.Dropdown(
+                        id='disposition_type_d',
+                        options = [{'label': val, 'value': key} for key, val in sorted(dispo_map['circuit'].items(), key=lambda item: item[1])],
+                        value = [0],
+                        searchable=False,
+                        multi=True,
+                        style={'background-color': '#DDD7D7','width': '100%'},
+                        className = 'row',
+                        placeholder = 'All Dispositions'
+                    ), style =  {'width': '16%', 'display': 'inline-block'}),
 
+                ], style={'display':'flex', 'margin':'1.5em'}
+    ),
         html.Div([
 
-            dcc.Graph(id='trend-analysis')
+            html.Div(html.Img(src=app.get_asset_url('temp_pie.jpg'), style={'width':'100%'}), style = {'width': '20%'}, className = 'w3-row w3-col'),
+
+            html.Div(dcc.Graph(id='trend-analysis', style={'height':'650px'}), style = {'width': '60%'}, className = 'w3-row w3-col'),
+
+            html.Div(html.Img(src=app.get_asset_url('temp_graph.png'), style={'width':'100%'}), style = {'width': '20%'}, className = 'w3-row w3-col')
         ])
     ]
 )
@@ -128,10 +132,10 @@ layout = html.Div(children = [
     Input('district_or_circuit_d', 'value'),
     Input('race_d', 'value'),
     Input('gender_d', 'value'),
-    Input('time-series_d', 'value'),
     Input('charge_type_d', 'value'),
+    Input('fips_code', 'value'),
     Input('disposition_type_d', 'value'))
-def update_graph(district_or_circuit, race_name, sex_name, year, charge_type, dispo_code):
+def update_graph(district_or_circuit, race_name, sex_name, charge_type, fips_code, dispo_code):
 
     if district_or_circuit == None:
         district_or_circuit = 'circuit'
@@ -141,39 +145,52 @@ def update_graph(district_or_circuit, race_name, sex_name, year, charge_type, di
 
     if not bool(sex_name):
         sex_name = [*range(2)]
-
-    if not bool(year):
-        if district_or_circuit == 'circuit':
-            year = [*range(min(full_data['circuit']), max(full_data['circuit']) + 1)]
-        else:
-            year = [*range(min(full_data['district']), max(full_data['district']) + 1)]
+    
+    if isinstance(fips_code, str):
+        fips_code = [*fips_map.keys()]
     
     if not bool(charge_type):
         if district_or_circuit == 'circuit':
             charge_type = [*range(5)]
         else:
             charge_type = [*range(9)]
-    
+
     if not bool(dispo_code):
         if district_or_circuit == 'circuit':
             dispo_code = [*range(12)]
         else:
             dispo_code = [*range(23)]
 
-    transformed_data = pd.concat((val for key, val in full_data[district_or_circuit].items() if int(key) in year), keys = year).reset_index(level=0).rename(columns = {'level_0':'YEAR'})
-    transformed_data = transformed_data.groupby(['YEAR', 'Race', 'Sex', 'ChargeType', 'DispositionCode'])['YEAR'].count().reset_index(name='count')
-    
-    fig = px.line(transformed_data, x='YEAR', y='count', color='count', markers = True)
+    query_str = '(' + ') & ('.join([f'Race in %s' % race_name,
+                        f'Sex in %s' % sex_name,
+                        f'ChargeType in %s' % charge_type,
+                        f'DispositionCode in %s' % dispo_code,
+                        f'FIPS in %s' % fips_code]) + ')'
+
+    transformed_data = pd.concat((val for val in full_data[district_or_circuit].values()), 
+                                keys = range(min(full_data[district_or_circuit]), max(full_data[district_or_circuit])+1)
+                                ).reset_index(level=0).rename(columns = {'level_0':'YEAR'})
+
+    transformed_data = transformed_data.query(query_str)
+
+    transformed_data = transformed_data.groupby(['YEAR', 'Race', 'Sex'])['YEAR'].count().reset_index(name='count')
+    transformed_data['race_sex'] = transformed_data['Race'].map(race_map) + ' ' + transformed_data['Sex'].map(sex_map)
+
+    fig = px.line(transformed_data, x='YEAR', y='count', color='race_sex', markers = True, labels={'race_sex':'Demographic',
+                                                                                                    'YEAR': 'Year', 
+                                                                                                    'count': 'Number of Arrests'})
+
+    fig.update_xaxes(nticks = len(full_data[district_or_circuit]), showline=True, linewidth=2, linecolor='black', mirror=True)
+    fig.update_yaxes(showline=True, linewidth=2, linecolor='black', mirror=True)
+
 
     return fig
 
 # Modifying Slider and Drop Down to be Dynamic
 @app.callback(
     [Output('charge_type_d', 'options'),
-    Output('disposition_type_d', 'options'),
-    Output('time-series_d', 'options')], 
-    Output('time-series_d', 'value'),
-    Input('district_or_circuit', 'value')
+    Output('disposition_type_d', 'options')],
+    Input('district_or_circuit_d', 'value')
     )
 def update_dynamic_dropdowns(district_or_circuit):
 
@@ -182,11 +199,8 @@ def update_dynamic_dropdowns(district_or_circuit):
 
     charge_options = [{'label': val, 'value': key} for key, val in sorted(charge_map[district_or_circuit].items(), key=lambda item: item[1])]
     disposition_options = [{'label': val, 'value': key} for key, val in sorted(dispo_map[district_or_circuit].items(), key=lambda item: item[1])]
-    year_options = [{'label': str(k), 'value': k} for k in sorted(full_data[district_or_circuit], reverse=True)]
-    year_value = [max(full_data[district_or_circuit])]
 
-    return charge_options, disposition_options, year_options, year_value
-
+    return charge_options, disposition_options
 
 
 # %%
