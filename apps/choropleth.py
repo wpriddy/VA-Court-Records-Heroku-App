@@ -134,10 +134,16 @@ layout = html.Div(children = [
 
         html.Div([
 
-            dcc.Graph(
-                id='interactive-graphic',
-                style = {'border': '.5px solid black', 'margin-left': '28px'},
-                className = 'w3-row w3-twothird'),
+            dcc.Loading(
+                id = 'choropleth_loader',
+                children = [
+                dcc.Graph(
+                    id='interactive-graphic',
+                    style = {'border': '.5px solid black', 'margin-left': '28px'},
+                    className = 'w3-row w3-twothird')],
+                    type="graph", 
+                    style = {'margin': 'auto'}, 
+                    ),
 
                 html.Div([
                     

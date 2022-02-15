@@ -119,7 +119,14 @@ layout = html.Div(children = [
 
             html.Div(html.Img(src=app.get_asset_url('temp_pie.jpg'), style={'width':'100%'}), style = {'width': '20%'}, className = 'w3-row w3-col'),
 
-            html.Div(dcc.Graph(id='trend-analysis', style={'height':'650px'}), style = {'width': '60%'}, className = 'w3-row w3-col'),
+            html.Div(
+                dcc.Loading(id = "loading-icon", 
+                    children=[dcc.Graph(id='trend-analysis', style={'height':'650px'})],
+                    type="graph", 
+                    style = {'margin': 'auto'}),
+                    
+                style = {'width': '60%'}, className = 'w3-row w3-col'),
+                
 
             html.Div(html.Img(src=app.get_asset_url('temp_graph.png'), style={'width':'100%'}), style = {'width': '20%'}, className = 'w3-row w3-col')
         ])
