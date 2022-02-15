@@ -6,7 +6,6 @@ import sys
 sys.path.insert(0, r'..')
 from app import app
 import plotly.express as px
-import plotly.graph_objects as go
 import pandas as pd
 import pathlib
 from data.get_data import *
@@ -28,7 +27,8 @@ layout = html.Div(children = [
             style = {
                 'textAlign': 'center',
                 'color': colors['text'],
-                'font-weight': 'bold'               
+                'font-weight': 'bold',
+                'margin-top': '20px'             
             }),
 
     html.Div([
@@ -234,21 +234,22 @@ def update_graph(district_or_circuit, race_name, sex_name, year, per_capita, cha
     transformed_data = transformed_data.groupby(['FIPS', 'Race', 'Sex', 'ChargeType', 'DispositionCode']).sum().reset_index()
 
     query_str = '(' + ') & ('.join([f'Race in %s' % race_name,
-                        f'Sex == %s' % sex_name,
-                        f'ChargeType == %s' % charge_type,
-                        f'DispositionCode == %s' % dispo_code]) + ')'
+                        f'Sex in %s' % sex_name,
+                        f'ChargeType in %s' % charge_type,
+                        f'DispositionCode in %s' % dispo_code]) + ')'
 
     if len(year) < 2:
         transformed_data = transformed_data.query(query_str).groupby(['FIPS'])['count'].sum().reset_index()
     else:
+        # TODO Potentally buggy due to Means and the Zero dataframe
         transformed_data = transformed_data.query(query_str).groupby(['FIPS'])['count'].mean().astype(int).reset_index()
 
     # Final Data in Dictionary, use Year to Index data
     if per_capita == 'True':
 
         census_query_str = '(' + ') & ('.join([f'Race in %s' % race_name,
-                                               f'Sex == %s' % sex_name, 
-                                               f'YEAR == %s' % year]) + ')'
+                                               f'Sex in %s' % sex_name, 
+                                               f'YEAR in %s' % year]) + ')'
         
         census = census_data.query(census_query_str)
         
@@ -287,6 +288,7 @@ def update_graph(district_or_circuit, race_name, sex_name, year, per_capita, cha
             labels={'count': 'arrests'},
             hover_name = 'Area'
         )
+        # TODO There are null values in District when mapped to fips_map
         data = transformed_data[['Area', 'count']].sort_values(['count'], ascending=False).to_dict('records')
         columns = [{"name": i, "id": i} for i in transformed_data[['Area', 'count']].columns]
 

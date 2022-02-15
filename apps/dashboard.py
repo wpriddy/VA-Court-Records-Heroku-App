@@ -1,29 +1,206 @@
 #%%
-
+from dash import dcc, html, dash_table
+from dash.dependencies import Input, Output
+from itertools import product
+import sys
+sys.path.insert(0, r'..')
+from app import app
 import plotly.express as px
 import pandas as pd
-import os
+import pathlib
+from data.get_data import *
 
-#Needs rewriting
+# get relative data folder
+PATH = pathlib.Path(__file__).parent
+DATA_PATH = PATH.joinpath("../data/files").resolve()
+
+colors = {
+    'background': '#111111',
+    'text': '#2C2C2C'
+}
+
+fips_map = pd.read_pickle(DATA_PATH.joinpath('fips_map.pickle'))
+
+layout = html.Div(children = [
+
+    html.H1(children = 'Virginia Court Records Interactive Dashboard',
+            style = {
+                'textAlign': 'center',
+                'color': colors['text'],
+                'font-weight': 'bold',
+                'margin-top': '20px'                 
+            }),
+
+    html.Div([
+            html.Div(
+                dcc.Dropdown(
+                    id='district_or_circuit_d',
+                    options = [{'label': 'Circuit', 'value': 'circuit'}, {'label': 'District', 'value': 'district'}],
+                    value = 'circuit',
+                    searchable=False, 
+                    style={'background-color': '#DDD7D7','width': '100%'},
+                    className = 'row',
+                    placeholder = 'Select a Court'
+                ), style={'width': '16%', 'display': 'inline-block'}),
+
+            html.Div(' a'*2,  style={'color':'white'}),
+
+            html.Div(
+                dcc.Dropdown(
+                    id='fips_code',
+                    options = [{'label': val, 'value': key} for key, val in sorted(fips_map.items(), key=lambda item: item[1])],
+                    value = 'All',
+                    searchable=False,
+                    multi=True,
+                    style={'background-color': '#DDD7D7','width': '100%'},
+                    className = 'row',
+                    placeholder = 'All Regions'
+                ), style = {'width': '16%', 'display': 'inline-block'}),
+
+            html.Div(' a'*2,  style={'color':'white'}),
+
+            html.Div(
+                dcc.Dropdown(
+                    id='race_d',
+                    options=[{'label': val, 'value': key} for key, val in sorted(race_map.items(), key=lambda item: item[1])],
+                    value= [5],
+                    searchable=False,
+                    multi=True,
+                    style={'background-color': '#DDD7D7','width': '100%'},
+                    className = 'row',
+                    placeholder = 'All Races'
+                ), style = {'width': '16%', 'display': 'inline-block'}),
+            
+            html.Div(' a'*2,  style={'color':'white'}),
+
+            html.Div(
+                dcc.Dropdown(
+                    id='gender_d',
+                    options = [{'label': val, 'value': key} for key, val in sorted(sex_map.items(), key=lambda item: item[1])],
+                    value = [1],
+                    searchable=False,
+                    multi=True, 
+                    style={'background-color': '#DDD7D7','width': '100%'},
+                    className = 'row', 
+                    placeholder = 'All Sexes'
+                ), style = {'width': '16%', 'display': 'inline-block'}),
+
+               html.Div(' a'*2,  style={'color':'white'}),
+        
+                html.Div(
+                    dcc.Dropdown(
+                        id='charge_type_d',
+                        options = [{'label': val, 'value': key} for key, val in sorted(charge_map['circuit'].items(), key=lambda item: item[1])],
+                        value = [0],
+                        searchable=False,
+                        multi=True, 
+                        style={'background-color': '#DDD7D7','width': '100%'},
+                        className = 'row',
+                        placeholder = 'All Charges'
+                    ), style =  {'width': '16%', 'display': 'inline-block'}),
+                    
+                html.Div(' a'*2,  style={'color':'white'}),
+
+                html.Div(
+                    dcc.Dropdown(
+                        id='disposition_type_d',
+                        options = [{'label': val, 'value': key} for key, val in sorted(dispo_map['circuit'].items(), key=lambda item: item[1])],
+                        value = [0],
+                        searchable=False,
+                        multi=True,
+                        style={'background-color': '#DDD7D7','width': '100%'},
+                        className = 'row',
+                        placeholder = 'All Dispositions'
+                    ), style =  {'width': '16%', 'display': 'inline-block'}),
+
+                ], style={'display':'flex', 'margin':'1.5em'}
+    ),
+        html.Div([
+
+            html.Div(html.Img(src=app.get_asset_url('temp_pie.jpg'), style={'width':'100%'}), style = {'width': '20%'}, className = 'w3-row w3-col'),
+
+            html.Div(dcc.Graph(id='trend-analysis', style={'height':'650px'}), style = {'width': '60%'}, className = 'w3-row w3-col'),
+
+            html.Div(html.Img(src=app.get_asset_url('temp_graph.png'), style={'width':'100%'}), style = {'width': '20%'}, className = 'w3-row w3-col')
+        ])
+    ]
+)
+
+# Querying and Graphing Selected Data
+@app.callback(
+    Output('trend-analysis', 'figure'),
+    Input('district_or_circuit_d', 'value'),
+    Input('race_d', 'value'),
+    Input('gender_d', 'value'),
+    Input('charge_type_d', 'value'),
+    Input('fips_code', 'value'),
+    Input('disposition_type_d', 'value'))
+def update_graph(district_or_circuit, race_name, sex_name, charge_type, fips_code, dispo_code):
+
+    if district_or_circuit == None:
+        district_or_circuit = 'circuit'
+
+    if not bool(race_name):
+        race_name = [*range(6)]
+
+    if not bool(sex_name):
+        sex_name = [*range(2)]
+    
+    if isinstance(fips_code, str):
+        fips_code = [*fips_map.keys()]
+    
+    if not bool(charge_type):
+        if district_or_circuit == 'circuit':
+            charge_type = [*range(5)]
+        else:
+            charge_type = [*range(9)]
+
+    if not bool(dispo_code):
+        if district_or_circuit == 'circuit':
+            dispo_code = [*range(12)]
+        else:
+            dispo_code = [*range(23)]
+
+    query_str = '(' + ') & ('.join([f'Race in %s' % race_name,
+                        f'Sex in %s' % sex_name,
+                        f'ChargeType in %s' % charge_type,
+                        f'DispositionCode in %s' % dispo_code,
+                        f'FIPS in %s' % fips_code]) + ')'
+
+    transformed_data = pd.concat((val for val in full_data[district_or_circuit].values()), 
+                                keys = range(min(full_data[district_or_circuit]), max(full_data[district_or_circuit])+1)
+                                ).reset_index(level=0).rename(columns = {'level_0':'YEAR'})
+
+    transformed_data = transformed_data.query(query_str)
+
+    transformed_data = transformed_data.groupby(['YEAR', 'Race', 'Sex'])['YEAR'].count().reset_index(name='count')
+    transformed_data['race_sex'] = transformed_data['Race'].map(race_map) + ' ' + transformed_data['Sex'].map(sex_map)
+
+    fig = px.line(transformed_data, x='YEAR', y='count', color='race_sex', markers = True, labels={'race_sex':'Demographic',
+                                                                                                    'YEAR': 'Year', 
+                                                                                                    'count': 'Number of Arrests'})
+
+    fig.update_xaxes(nticks = len(full_data[district_or_circuit]), showline=True, linewidth=2, linecolor='black', mirror=True)
+    fig.update_yaxes(showline=True, linewidth=2, linecolor='black', mirror=True)
 
 
-# data = pd.read_csv(os.path.join('data', 'virginia_fips.csv'))
+    return fig
 
-# census_data = pd.read_pickle(r'..\ETL\data\census_clean.pickle')
+# Modifying Slider and Drop Down to be Dynamic
+@app.callback(
+    [Output('charge_type_d', 'options'),
+    Output('disposition_type_d', 'options')],
+    Input('district_or_circuit_d', 'value')
+    )
+def update_dynamic_dropdowns(district_or_circuit):
 
-# transformed_data = data.groupby(['FIPS', 'Race', 'Sex'])['FIPS'].count().reset_index(name='count')
+    if district_or_circuit == None:
+        district_or_circuit = 'circuit'
 
-# transformed_data = pd.merge(transformed_data, census_data[census_data.YEAR == 2003], how='left', left_on=['FIPS', 'Race', 'Sex'], right_on=['FIPS', 'Race', 'Gender']).drop(columns=['Gender', 'YEAR'])
+    charge_options = [{'label': val, 'value': key} for key, val in sorted(charge_map[district_or_circuit].items(), key=lambda item: item[1])]
+    disposition_options = [{'label': val, 'value': key} for key, val in sorted(dispo_map[district_or_circuit].items(), key=lambda item: item[1])]
 
-# transformed_data['Per Capita'] = transformed_data['count'] / transformed_data['population']
-
-# fig = px.sunburst(transformed_data, path=['Sex', 'Race'], values='population',
-#                   color='Per Capita')
-# fig.show()
+    return charge_options, disposition_options
 
 
 # %%
-# Add time series analysis (line graph)
-# Add Bar Graph
-
-#Look into using other visualization tactics with Dash
