@@ -142,41 +142,42 @@ layout = html.Div(children = [
                     style = {'border': '.5px solid black', 'margin-left': '28px'},
                     className = 'w3-row w3-twothird')],
                     type="graph", 
-                    style = {'margin': 'auto'}, 
+                    style = {'margin-top': '20%', 'margin-right':'40%'}, 
+                    className = ''
                     ),
 
-                html.Div([
-                    
-                    dash_table.DataTable(
-                                    id = 'dataTable',
-                                    style_table = {'overflowY': 'scroll',
-                                                    'overflowX': 'scroll', 
-                                                    'margin-left': '4%', 
-                                                    'width': '117%', 
-                                                    'maxHeight': '453px',
-                                                    'border': '1px solid black'},
-                                    style_data = {'height': 'auto'},
-                                    style_data_conditional=[
-                                        {
-                                            'if': {'row_index': 'odd'},
-                                            'backgroundColor': 'rgb(220, 220, 220)',
-                                        }
-                                    ],
-                                    style_header={
-                                        'backgroundColor': 'rgb(210, 210, 210)',
-                                        'color': 'black',
-                                        'fontWeight': 'bold'
-                                    },
-                                    style_cell_conditional=[
-                                        {
-                                            'if': {'column_id': c},
-                                            'textAlign': 'left'
-                                        } for c in ['Area']
-                                    ],
-                                    sort_action = 'native'
-                                )
-                        ], className = 'w3-row w3-quarter w3-border-black')
-                ])
+            html.Div([
+                
+                dash_table.DataTable(
+                                id = 'dataTable',
+                                style_table = {'overflowY': 'scroll',
+                                                'overflowX': 'scroll', 
+                                                'margin-left': '4%', 
+                                                'width': '117%', 
+                                                'maxHeight': '453px',
+                                                'border': '1px solid black'},
+                                style_data = {'height': 'auto'},
+                                style_data_conditional=[
+                                    {
+                                        'if': {'row_index': 'odd'},
+                                        'backgroundColor': 'rgb(220, 220, 220)',
+                                    }
+                                ],
+                                style_header={
+                                    'backgroundColor': 'rgb(210, 210, 210)',
+                                    'color': 'black',
+                                    'fontWeight': 'bold'
+                                },
+                                style_cell_conditional=[
+                                    {
+                                        'if': {'column_id': c},
+                                        'textAlign': 'left'
+                                    } for c in ['Area']
+                                ],
+                                sort_action = 'native'
+                            )
+                    ], className = 'w3-row w3-quarter w3-border-black')
+            ])
         ] 
 )
 

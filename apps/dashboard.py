@@ -121,14 +121,27 @@ layout = html.Div(children = [
 
             html.Div(
                 dcc.Loading(id = "loading-icon", 
-                    children=[dcc.Graph(id='trend-analysis', style={'height':'650px'})],
+                    children=[
+                        dcc.Graph(
+                                id='trend-analysis', 
+                                style={'height':'650px'})],
                     type="graph", 
                     style = {'margin': 'auto'}),
                     
                 style = {'width': '60%'}, className = 'w3-row w3-col'),
                 
 
-            html.Div(html.Img(src=app.get_asset_url('temp_graph.png'), style={'width':'100%'}), style = {'width': '20%'}, className = 'w3-row w3-col')
+            html.Div([
+                dcc.Graph(
+                    id = 'sex_hist', 
+                    style = {'width': '400px',
+                            'height': '375px',
+                            'margin-top': '5%'}
+                ) ,
+                dcc.Graph(
+                    id = 'race_hist'
+                )
+            ], style = {'width': '20%'}, className = 'w3-row w3-col')
         ])
     ]
 )
@@ -136,6 +149,8 @@ layout = html.Div(children = [
 # Querying and Graphing Selected Data
 @app.callback(
     Output('trend-analysis', 'figure'),
+    Output('sex_hist', 'figure'),
+    Output('race_hist', 'figure'),
     Input('district_or_circuit_d', 'value'),
     Input('race_d', 'value'),
     Input('gender_d', 'value'),
@@ -181,7 +196,10 @@ def update_graph(district_or_circuit, race_name, sex_name, charge_type, fips_cod
     transformed_data = transformed_data.query(query_str)
 
     transformed_data = transformed_data.groupby(['YEAR', 'Race', 'Sex'])['YEAR'].count().reset_index(name='count')
-    transformed_data['race_sex'] = transformed_data['Race'].map(race_map) + ' ' + transformed_data['Sex'].map(sex_map)
+    
+    transformed_data['Sex'] = transformed_data['Sex'].map(sex_map)
+    transformed_data['Race'] = transformed_data['Race'].map(race_map)
+    transformed_data['race_sex'] = transformed_data['Race'] + ' ' + transformed_data['Sex']
 
     fig = px.line(transformed_data, x='YEAR', y='count', color='race_sex', markers = True, labels={'race_sex':'Demographic',
                                                                                                     'YEAR': 'Year', 
@@ -189,9 +207,12 @@ def update_graph(district_or_circuit, race_name, sex_name, charge_type, fips_cod
 
     fig.update_xaxes(nticks = len(full_data[district_or_circuit]), showline=True, linewidth=2, linecolor='black', mirror=True)
     fig.update_yaxes(showline=True, linewidth=2, linecolor='black', mirror=True)
+    fig.update_layout(legend=dict(orientation= 'h', y=1.15, x = 0.4))
 
+    sex_fig = px.histogram(transformed_data, x = 'Sex', y='count', color = 'Sex')
+    race_fig = px.histogram(transformed_data, x = 'Race', y='count', color = 'Race')
 
-    return fig
+    return fig, sex_fig, race_fig
 
 # Modifying Slider and Drop Down to be Dynamic
 @app.callback(
