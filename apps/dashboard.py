@@ -139,7 +139,10 @@ layout = html.Div(children = [
                             'margin-top': '5%'}
                 ) ,
                 dcc.Graph(
-                    id = 'race_hist'
+                    id = 'race_hist',
+                    style = {'width': '400px',
+                            'height': '50%',
+                            'margin-top': '5%'}
                 )
             ], style = {'width': '20%'}, className = 'w3-row w3-col')
         ])
@@ -207,7 +210,7 @@ def update_graph(district_or_circuit, race_name, sex_name, charge_type, fips_cod
 
     fig.update_xaxes(nticks = len(full_data[district_or_circuit]), showline=True, linewidth=2, linecolor='black', mirror=True)
     fig.update_yaxes(showline=True, linewidth=2, linecolor='black', mirror=True)
-    fig.update_layout(legend=dict(orientation= 'h', y=1.15, x = 0.4))
+    fig.update_layout(legend=dict(orientation= 'h', y=1.15, x = 0.5, xanchor = 'center', yanchor='top'))
 
     sex_fig = px.histogram(transformed_data, x = 'Sex', y='count', color = 'Sex')
     race_fig = px.histogram(transformed_data, x = 'Race', y='count', color = 'Race')
