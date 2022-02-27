@@ -24,7 +24,7 @@ s3_client = session.client(
 
 
 full_data = {'circuit': {year: pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files', 'circuit', str(year) + '.pickle')) for year in range(2000, 2021)},
-             'district': {year: pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files', 'district', str(year) + '.pickle')) for year in range(2007, 2021)}
+             'district': {year: pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files', 'district', str(year) + '.pickle')) for year in range(2009, 2021)}
              }
 
 race_map = pd.read_pickle(os.path.join(tempermental_medium, 'data', 'files' , 'race_map.pickle'))

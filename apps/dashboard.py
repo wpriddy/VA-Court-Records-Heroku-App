@@ -23,6 +23,11 @@ fips_map = pd.read_pickle(DATA_PATH.joinpath('fips_map.pickle'))
 
 layout = html.Div(children = [
 
+    dcc.ConfirmDialog(
+        id = 'insufficient-data',
+        message = "{} Insufficient Data Available. Set Another Breakout {}".format(u"\u26A0", u"\u26A0")
+    ),
+
     html.H1(children = 'Virginia Court Records Interactive Dashboard',
             style = {
                 'textAlign': 'center',
@@ -62,7 +67,7 @@ layout = html.Div(children = [
             html.Div(
                 dcc.Dropdown(
                     id='race_d',
-                    options=[{'label': val, 'value': key} for key, val in sorted(race_map.items(), key=lambda item: item[1])],
+                    options=[{'label': val, 'value': key} for key, val in sorted(race_map.items(), key=lambda item: item[1]) if val != 'Unknown'],
                     value= [5],
                     searchable=False,
                     multi=True,
@@ -154,6 +159,7 @@ layout = html.Div(children = [
     Output('trend-analysis', 'figure'),
     Output('sex_hist', 'figure'),
     Output('race_hist', 'figure'),
+    Output('insufficient-data', 'displayed'),
     Input('district_or_circuit_d', 'value'),
     Input('race_d', 'value'),
     Input('gender_d', 'value'),
@@ -197,9 +203,8 @@ def update_graph(district_or_circuit, race_name, sex_name, charge_type, fips_cod
                                 ).reset_index(level=0).rename(columns = {'level_0':'YEAR'})
 
     transformed_data = transformed_data.query(query_str)
-
     transformed_data = transformed_data.groupby(['YEAR', 'Race', 'Sex'])['YEAR'].count().reset_index(name='count')
-    
+
     transformed_data['Sex'] = transformed_data['Sex'].map(sex_map)
     transformed_data['Race'] = transformed_data['Race'].map(race_map)
     transformed_data['race_sex'] = transformed_data['Race'] + ' ' + transformed_data['Sex']
@@ -215,7 +220,10 @@ def update_graph(district_or_circuit, race_name, sex_name, charge_type, fips_cod
     sex_fig = px.histogram(transformed_data, x = 'Sex', y='count', color = 'Sex')
     race_fig = px.histogram(transformed_data, x = 'Race', y='count', color = 'Race')
 
-    return fig, sex_fig, race_fig
+    if transformed_data.empty:
+        return fig, sex_fig, race_fig, True
+
+    return fig, sex_fig, race_fig, False
 
 # Modifying Slider and Drop Down to be Dynamic
 @app.callback(

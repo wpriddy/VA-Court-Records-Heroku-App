@@ -19,6 +19,10 @@ colors = {
     'text': '#2C2C2C'
 }
 
+#TODO
+# Remove bad fips from District data sets 
+# [51712, 51761, 51122, 51762, 51701, 51703, 51702, 51764, 51711]
+
 fips_map = pd.read_pickle(DATA_PATH.joinpath('fips_map.pickle'))
 
 layout = html.Div(children = [
@@ -62,7 +66,7 @@ layout = html.Div(children = [
             html.Div(
                 dcc.Dropdown(
                     id='race',
-                    options=[{'label': val, 'value': key} for key, val in sorted(race_map.items(), key=lambda item: item[1])],
+                    options=[{'label': val, 'value': key} for key, val in sorted(race_map.items(), key=lambda item: item[1]) if val != 'Unknown'],
                     value= [5],
                     searchable=False,
                     multi=True,
@@ -106,9 +110,8 @@ layout = html.Div(children = [
             dcc.Dropdown(
                 id='charge_type',
                 options = [{'label': val, 'value': key} for key, val in sorted(charge_map['circuit'].items(), key=lambda item: item[1])],
-                value = [0],
+                value = 0,
                 searchable=False,
-                multi=True, 
                 style={'background-color': '#DDD7D7','width': '100%'},
                 className = 'row',
                 placeholder = 'All Charges'
@@ -120,9 +123,8 @@ layout = html.Div(children = [
             dcc.Dropdown(
                 id='disposition_type',
                 options = [{'label': val, 'value': key} for key, val in sorted(dispo_map['circuit'].items(), key=lambda item: item[1])],
-                value = [0],
+                value = 0,
                 searchable=False,
-                multi=True,
                 style={'background-color': '#DDD7D7','width': '100%'},
                 className = 'row',
                 placeholder = 'All Dispositions'
@@ -226,7 +228,7 @@ def update_graph(district_or_circuit, race_name, sex_name, year, per_capita, cha
             dispo_code = [*range(23)]
 
     transformed_data = pd.concat(val for key, val in full_data[district_or_circuit].items() if int(key) in year).groupby(['FIPS', 'Race', 'Sex', 'ChargeType', 'DispositionCode'])['FIPS'].count().reset_index(name='count')
-
+    print(transformed_data.shape)
     # Create data frame with count=zero for every combination of FIPS, Area, Race, and Sex
     empty_data = pd.DataFrame(product(
                                 census_data.Sex.unique(), 
@@ -242,13 +244,12 @@ def update_graph(district_or_circuit, race_name, sex_name, year, per_capita, cha
 
     query_str = '(' + ') & ('.join([f'Race in %s' % race_name,
                         f'Sex in %s' % sex_name,
-                        f'ChargeType in %s' % charge_type,
-                        f'DispositionCode in %s' % dispo_code]) + ')'
+                        f'ChargeType == %s' % charge_type,
+                        f'DispositionCode == %s' % dispo_code]) + ')'
 
     if len(year) < 2:
         transformed_data = transformed_data.query(query_str).groupby(['FIPS'])['count'].sum().reset_index()
     else:
-        # TODO Potentally buggy due to Means and the Zero dataframe
         transformed_data = transformed_data.query(query_str).groupby(['FIPS'])['count'].mean().astype(int).reset_index()
 
     # Final Data in Dictionary, use Year to Index data
@@ -285,6 +286,7 @@ def update_graph(district_or_circuit, race_name, sex_name, year, per_capita, cha
         columns = [{"name": i, "id": i} for i in ['Area', 'Per Capita Arrests']]
     else:
         #  Auto Adjust Legend Range to Fit Value
+        print(set(transformed_data.FIPS).difference(set(fips_map)))
         transformed_data['Area'] = transformed_data.FIPS.map(fips_map)
         color_range = (min(transformed_data['count']), max(transformed_data['count']))
 
