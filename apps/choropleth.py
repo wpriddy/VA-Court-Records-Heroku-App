@@ -301,7 +301,7 @@ def update_graph(district_or_circuit, race_name, sex_name, year, per_capita, cha
         data = transformed_data[['Area', 'count']].sort_values(['count'], ascending=False).to_dict('records')
         columns = [{"name": i, "id": i} for i in transformed_data[['Area', 'count']].columns]
 
-    fig.update_geos(fitbounds="locations")
+    fig.update_geos(fitbounds="locations", visible=False)
     fig.update_layout(margin={'r':0,'t':0,'l':0,'b':0})
 
     return fig, data, columns

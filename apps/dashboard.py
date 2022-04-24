@@ -139,15 +139,16 @@ layout = html.Div(children = [
             html.Div([
                 dcc.Graph(
                     id = 'sex_hist', 
-                    style = {'width': '400px',
-                            'height': '375px',
+                    style = {'width': '100%',
+                            'height': '40%',
                             'margin-top': '5%'}
                 ) ,
                 dcc.Graph(
                     id = 'race_hist',
-                    style = {'width': '400px',
-                            'height': '50%',
-                            'margin-top': '5%'}
+                    style = {'width': '100%',
+                            'height': '40%',
+                            'margin': 'auto'
+                            }
                 )
             ], style = {'width': '20%'}, className = 'w3-row w3-col')
         ])
