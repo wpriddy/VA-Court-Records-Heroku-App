@@ -178,7 +178,7 @@ layout = html.Div(children = [
                                 ],
                                 sort_action = 'native'
                             )
-                    ], className = 'w3-row w3-quarter w3-border-black')
+                    ], className = 'w3-row w3-quarter w3-border-black')     
             ])
         ] 
 )
@@ -228,7 +228,7 @@ def update_graph(district_or_circuit, race_name, sex_name, year, per_capita, cha
             dispo_code = [*range(23)]
 
     transformed_data = pd.concat(val for key, val in full_data[district_or_circuit].items() if int(key) in year).groupby(['FIPS', 'Race', 'Sex', 'ChargeType', 'DispositionCode'])['FIPS'].count().reset_index(name='count')
-    print(transformed_data.shape)
+
     # Create data frame with count=zero for every combination of FIPS, Area, Race, and Sex
     empty_data = pd.DataFrame(product(
                                 census_data.Sex.unique(), 

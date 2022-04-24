@@ -6,12 +6,10 @@ from dash.dependencies import Input, Output
 from app import app, server
 
 # Connect to your app pages
-from apps import choropleth, construction, api_docs, dashboard
+from apps import choropleth, front_page
 
 layouts = {'/heat-map': choropleth.layout,
-          '/': construction.layout,
-          '/dashboard': dashboard.layout,
-          '/api_docs': api_docs.layout}
+          '/': front_page.layout}
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
@@ -24,19 +22,16 @@ app.layout = html.Div([
                 dcc.Link('Choropleth', href='/heat-map', style={'height':'56px', 
                                                                 'text-decoration':'none',
                                                                 'text-shadow':'0.5px 0.5px 0 #444'},
-                         className='w3-cell w3-bar-item w3-hover-blue'),
-                dcc.Link('Dashboard', href='/dashboard', style={'height':'56px',
-                                                             'text-decoration':'none', 
-                                                             'text-shadow':'0.5px 0.5px 0 #444'},
-                         className='w3-bar-item w3-hover-blue'),
-                dcc.Link('API Documentation', href='/api_docs', style={'height':'56px',
-                                                             'text-decoration':'none', 
-                                                             'text-shadow':'0.5px 0.5px 0 #444'},
-                         className='w3-bar-item w3-hover-blue')
+                         className='w3-cell w3-bar-item w3-hover-blue')
         ], className='w3-container w3-white w3-bar w3-card')
     ], className='w3-top'),
 
-    html.Div(id='page-content', className='w3-container w3-padding-48')
+    html.Div(id='page-content', className='w3-container w3-padding-48'),
+    
+    html.Footer(
+        children = '*Information displayed in this page should be used for informative purposes only. Due to the cleanliness of the source data, trends shown in the aggregate are representative while exact numbers may vary. ',
+        style = {'textAlign': 'center'}
+        )
     ]
 )
 
