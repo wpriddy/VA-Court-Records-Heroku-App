@@ -8,8 +8,8 @@ import os
 
 tempermental_medium = '.'
 
-tokens = {'access key ID': 'AKIA6GKIQREKFAYKTX6N',
-        'access key': 'aNBWg/pptHHydedMFeDvZFl4X5Yz9YpwfGhpQcFV'
+tokens = {'access key ID': 'SECRET',
+        'access key': 'SECRET'
         }
 
 
